@@ -1,0 +1,286 @@
+openapi: 3.0.0
+info:
+  title: Hackathon Todo Backend API
+  description: Secure task management API with JWT authentication
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/tasks:
+    get:
+      summary: List all tasks for the current user
+      description: Retrieve a list of tasks belonging to the authenticated user
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, pending, completed]
+            default: all
+          description: Filter tasks by completion status
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [created, title]
+            default: created
+          description: Sort tasks by creation date or title
+      responses:
+        '200':
+          description: List of tasks for the current user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    
+    post:
+      summary: Create a new task
+      description: Create a new task associated with the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/tasks/{id}:
+    get:
+      summary: Get a specific task
+      description: Retrieve a specific task by ID if it belongs to the authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Task ID
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      summary: Update a task
+      description: Update a specific task if it belongs to the authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Task ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    delete:
+      summary: Delete a task
+      description: Delete a specific task if it belongs to the authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Task ID
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/tasks/{id}/complete:
+    patch:
+      summary: Toggle task completion status
+      description: Toggle the completion status of a specific task if it belongs to the authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Task ID
+      responses:
+        '200':
+          description: Task completion status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - user_id
+        - created_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the task
+          example: 1
+        title:
+          type: string
+          description: The title of the task
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Detailed description of the task
+          example: "Milk, eggs, bread, fruits"
+        completed:
+          type: boolean
+          description: Whether the task is completed
+          example: false
+        user_id:
+          type: string
+          description: ID of the user who owns this task
+          example: "user-123"
+        created_at:
+          type: string
+          format: date-time
+          description: When the task was created
+          example: "2023-10-20T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the task was last updated
+          example: "2023-10-20T10:00:00Z"
+    
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: The title of the task
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Detailed description of the task
+          example: "Milk, eggs, bread, fruits"
+    
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The updated title of the task
+          example: "Buy groceries and cook dinner"
+        description:
+          type: string
+          description: Updated description of the task
+          example: "Milk, eggs, bread, fruits, vegetables"
+        completed:
+          type: boolean
+          description: Updated completion status
+          example: true
+
+  responses:
+    UnauthorizedError:
+      description: Invalid or expired token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Not authenticated"
+    
+    ForbiddenError:
+      description: Access forbidden - attempting to access another user's resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Access forbidden"
+    
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Task not found"
+    
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Invalid input data"
