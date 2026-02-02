@@ -1,11 +1,12 @@
 {
   "version": 2,
+  "framework": "nextjs",
   "builds": [
     {
-      "src": "frontend/package.json",
+      "src": "frontend/next.config.js",
       "use": "@vercel/next",
       "config": {
-        "zeroConfig": true
+        "buildCommand": "cd frontend && npm install --legacy-peer-deps && npm run build"
       }
     }
   ],
@@ -14,5 +15,10 @@
       "src": "/(.*)",
       "dest": "frontend/$1"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
 }
