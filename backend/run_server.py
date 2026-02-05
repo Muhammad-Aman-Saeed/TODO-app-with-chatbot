@@ -4,6 +4,9 @@ import os
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from main import app
 
 if __name__ == "__main__":

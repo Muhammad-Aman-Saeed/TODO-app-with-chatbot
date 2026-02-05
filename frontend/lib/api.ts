@@ -3,7 +3,7 @@ import { Task, User } from '@/types';
 
 class ApiClient {
   private baseUrl: string;
-  
+
   constructor() {
     // Ensure the base URL ends with '/api' if it's the root URL
     const envBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -17,35 +17,12 @@ class ApiClient {
   }
 
   // Helper to get JWT token
-  private async getJwtToken(): Promise<string | null> {
+  private getJwtToken(): string | null {
     // Implementation to retrieve JWT from storage or session
     if (typeof window !== 'undefined') {
       // Client-side: get from localStorage or session
       const token = localStorage.getItem('jwt_token');
-
-      // Check if token exists and is valid
-      if (token) {
-        try {
-          // Simple check to see if token is expired (decode without verification)
-          const tokenParts = token.split('.');
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(atob(tokenParts[1]));
-            const currentTime = Math.floor(Date.now() / 1000);
-
-            // If token is expired, remove it and return null
-            if (payload.exp && payload.exp < currentTime) {
-              localStorage.removeItem('jwt_token');
-              return null;
-            }
-          }
-        } catch (e) {
-          // If there's an error decoding the token, remove it
-          localStorage.removeItem('jwt_token');
-          return null;
-        }
-
-        return token;
-      }
+      return token;
     }
     // Server-side: would need to implement differently
     return null;
@@ -56,7 +33,7 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = await this.getJwtToken();
+    const token = this.getJwtToken();
 
     const headers = {
       'Content-Type': 'application/json',
@@ -117,7 +94,7 @@ class ApiClient {
   }
 
   async deleteTask(id: number): Promise<void> {
-    const token = await this.getJwtToken();
+    const token = this.getJwtToken();
 
     const headers = {
       'Content-Type': 'application/json',
@@ -169,24 +146,36 @@ class ApiClient {
       body: JSON.stringify({ completed }),
     });
   }
-  
-  async register(userData: { email: string; password: string; name?: string }): Promise<{ user: User; token: string }> {
-    return this.request('/auth/register', {
+
+  async chat(message: string, conversationId: number | null): Promise<ChatResponse> {
+    return this.request('/chat', {
       method: 'POST',
-      body: JSON.stringify(userData),
+      body: JSON.stringify({ message, conversation_id: conversationId }),
     });
   }
-  
-  async login(credentials: { email: string; password: string }): Promise<{ user: User; token: string }> {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+
+  async getConversationHistory(conversationId: number): Promise<any[]> {
+    return this.request(`/conversations/${conversationId}/messages`);
   }
-  
-  async getAuthToken(): Promise<{ token: string; expiresAt: string }> {
-    return this.request('/auth/token');
-  }
+
 }
+
+// Define the response type for chat
+export type ChatResponse = {
+  action: 'add' | 'delete' | 'update' | 'complete' | 'list' | 'none';
+  task: {
+    id: string;
+    title: string;
+    description: string;
+    completed: boolean;
+  } | null;
+  message: string;
+  conversation_id: number;
+};
+
+// Export a convenience function for chat
+export const chatAPI = async (message: string, conversationId: number | null = null) => {
+  return apiClient.chat(message, conversationId);
+};
 
 export const apiClient = new ApiClient();

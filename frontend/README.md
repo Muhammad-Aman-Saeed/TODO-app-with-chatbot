@@ -19,7 +19,7 @@ This is the frontend for the full-stack TODO application built with Next.js 16+,
 - Tailwind CSS
 - Framer Motion (for animations)
 - Lucide React (icons)
-- Better Auth (authentication)
+- Custom authentication system with JWT tokens
 
 ## Environment Variables
 

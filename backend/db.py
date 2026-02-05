@@ -15,6 +15,10 @@ DATABASE_URL = "sqlite:///./test.db"
 # Create the database engine
 engine = create_engine(DATABASE_URL, echo=True)
 
+# Create a session class
+from functools import partial
+SessionLocal = partial(Session, engine)
+
 def get_session() -> Generator[Session, None, None]:
     """
     Dependency to get a database session

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,7 +12,14 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAuthenticated } = useAuth();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,13 +43,13 @@ export default function SignInPage() {
               Sign in to your account
             </p>
           </div>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
               {error}
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
@@ -59,7 +66,7 @@ export default function SignInPage() {
                   placeholder="your@email.com"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Password
@@ -74,7 +81,7 @@ export default function SignInPage() {
                   placeholder="••••••••"
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -84,7 +91,7 @@ export default function SignInPage() {
               </Button>
             </div>
           </form>
-          
+
           <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             <p>
               Don't have an account?{' '}
@@ -94,7 +101,7 @@ export default function SignInPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">
           <p>© 2026 Hackathon Todo App. All rights reserved.</p>
         </div>

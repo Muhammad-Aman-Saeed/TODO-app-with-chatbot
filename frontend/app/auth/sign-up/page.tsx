@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,7 +13,14 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const { register, isLoading } = useAuth();
+  const { register, isLoading, isAuthenticated } = useAuth();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +44,13 @@ export default function SignUpPage() {
               Join us today to manage your tasks efficiently
             </p>
           </div>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
               {error}
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
@@ -59,7 +66,7 @@ export default function SignUpPage() {
                   placeholder="John Doe"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Email
@@ -74,7 +81,7 @@ export default function SignUpPage() {
                   placeholder="your@email.com"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Password
@@ -89,7 +96,7 @@ export default function SignUpPage() {
                   placeholder="••••••••"
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -99,7 +106,7 @@ export default function SignUpPage() {
               </Button>
             </div>
           </form>
-          
+
           <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             <p>
               Already have an account?{' '}
@@ -109,7 +116,7 @@ export default function SignUpPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">
           <p>© 2026 Hackathon Todo App. All rights reserved.</p>
         </div>

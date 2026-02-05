@@ -53,13 +53,18 @@ export const TaskCard = ({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
         </button>
         
         <div className="flex-1 min-w-0">
-          <h3 className={`font-semibold truncate ${
-            task.completed 
-              ? 'text-slate-500 dark:text-slate-400 line-through' 
-              : 'text-slate-800 dark:text-slate-200'
-          }`}>
-            {task.title}
-          </h3>
+          <div className="flex items-baseline gap-2">
+            <span className="inline-block px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 rounded-full min-w-[24px] text-center">
+              #{task.id}
+            </span>
+            <h3 className={`font-semibold truncate ${
+              task.completed
+                ? 'text-slate-500 dark:text-slate-400 line-through'
+                : 'text-slate-800 dark:text-slate-200'
+            }`}>
+              {task.title}
+            </h3>
+          </div>
           
           {task.description && (
             <p className={`mt-1 text-sm truncate ${

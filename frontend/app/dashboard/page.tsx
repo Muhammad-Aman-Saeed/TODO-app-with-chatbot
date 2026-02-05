@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { Task, TasksState } from '@/types';
 import { TaskCard } from '@/components/TaskCard';
@@ -9,11 +10,16 @@ import { Modal } from '@/components/Modal';
 import { TaskForm } from '@/components/TaskForm';
 import { Button } from '@/components/ui/Button';
 import { Sidebar } from '@/components/Sidebar';
+import ChatModal from '@/components/ChatModal';
+import ChatbotIcon from '@/components/ChatbotIcon';
 import { Plus, Filter, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const router = useRouter();
+
+  // Declare all hooks at the top, before any conditional returns
   const [tasksState, setTasksState] = useState<TasksState>({
     tasks: [],
     filteredTasks: [],
@@ -24,13 +30,14 @@ export default function DashboardPage() {
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
 
   // Initialize dark mode based on system preference
   useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
+    const isDark = localStorage.getItem('darkMode') === 'true' ||
                    (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setDarkMode(isDark);
-    
+
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -43,7 +50,7 @@ export default function DashboardPage() {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     localStorage.setItem('darkMode', String(newDarkMode));
-    
+
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -51,7 +58,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Fetch tasks when authenticated
+  // Fetch tasks when authenticated and handle redirect when not authenticated
   useEffect(() => {
     if (isAuthenticated) {
       const fetchTasks = async () => {
@@ -75,24 +82,56 @@ export default function DashboardPage() {
       };
 
       fetchTasks();
+    } else {
+      // If not authenticated, reset tasks state
+      setTasksState({
+        tasks: [],
+        filteredTasks: [],
+        activeFilter: 'all',
+        isLoading: false,
+        error: null,
+      });
+
+      // Redirect to sign-in page if not authenticated and auth loading is complete
+      if (!authLoading) {
+        router.push('/auth/sign-in');
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading, router]);
 
   // Apply filter when tasks or filter changes
   useEffect(() => {
     let filtered = [...tasksState.tasks];
-    
+
     if (tasksState.activeFilter === 'pending') {
       filtered = filtered.filter(task => !task.completed);
     } else if (tasksState.activeFilter === 'completed') {
       filtered = filtered.filter(task => task.completed);
     }
-    
+
     setTasksState(prev => ({
       ...prev,
       filteredTasks: filtered,
     }));
   }, [tasksState.tasks, tasksState.activeFilter]);
+
+  // Show loading state
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-slate-900 dark:to-slate-800">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated after loading, show redirect message
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-slate-900 dark:to-slate-800">
+        <div className="text-lg">Redirecting to sign in...</div>
+      </div>
+    );
+  }
 
   const handleAddTask = () => {
     setEditingTask(null);
@@ -162,18 +201,9 @@ export default function DashboardPage() {
     setTasksState(prev => ({ ...prev, activeFilter: filter }));
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    // Redirect to sign-in handled by a wrapper component in a real app
-    return null;
-  }
+  const openChatModal = () => {
+    setShowChatModal(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex">
@@ -191,7 +221,7 @@ export default function DashboardPage() {
                 className="p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
               <Button variant="outline" onClick={logout}>
                 Logout
@@ -224,8 +254,8 @@ export default function DashboardPage() {
           <div className="bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl p-5 shadow-lg">
             <h3 className="text-white/90 text-sm font-medium">Productivity</h3>
             <p className="text-2xl font-bold text-white mt-1">
-              {tasksState.tasks.length > 0 
-                ? Math.round((tasksState.tasks.filter(t => t.completed).length / tasksState.tasks.length) * 100) + '%' 
+              {tasksState.tasks.length > 0
+                ? Math.round((tasksState.tasks.filter(t => t.completed).length / tasksState.tasks.length) * 100) + '%'
                 : '0%'}
             </p>
           </div>
@@ -234,29 +264,29 @@ export default function DashboardPage() {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex space-x-2">
-            <Button 
-              variant={tasksState.activeFilter === 'all' ? 'primary' : 'outline'} 
+            <Button
+              variant={tasksState.activeFilter === 'all' ? 'primary' : 'outline'}
               onClick={() => handleFilterChange('all')}
               className="flex items-center"
             >
               <Filter className="h-4 w-4 mr-1" />
               All
             </Button>
-            <Button 
-              variant={tasksState.activeFilter === 'pending' ? 'primary' : 'outline'} 
+            <Button
+              variant={tasksState.activeFilter === 'pending' ? 'primary' : 'outline'}
               onClick={() => handleFilterChange('pending')}
             >
               Pending
             </Button>
-            <Button 
-              variant={tasksState.activeFilter === 'completed' ? 'primary' : 'outline'} 
+            <Button
+              variant={tasksState.activeFilter === 'completed' ? 'primary' : 'outline'}
               onClick={() => handleFilterChange('completed')}
             >
               Completed
             </Button>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={handleAddTask}
             className="flex items-center bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
           >
@@ -281,8 +311,8 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">No tasks found</h3>
             <p className="text-slate-500 dark:text-slate-400">
-              {tasksState.activeFilter === 'all' 
-                ? "You don't have any tasks yet. Get started by adding a new task!" 
+              {tasksState.activeFilter === 'all'
+                ? "You don't have any tasks yet. Get started by adding a new task!"
                 : `No ${tasksState.activeFilter} tasks. Try changing the filter.`}
             </p>
           </div>
@@ -323,6 +353,37 @@ export default function DashboardPage() {
           onCancel={() => setShowAddTaskModal(false)}
         />
       </Modal>
+
+      {/* Chatbot Components */}
+      <ChatbotIcon onClick={openChatModal} />
+      <ChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        onTaskUpdate={() => {
+          // Refresh the task list when the chatbot modifies tasks
+          const fetchTasks = async () => {
+            try {
+              setTasksState(prev => ({ ...prev, isLoading: true }));
+              const tasks = await apiClient.getTasks();
+              setTasksState({
+                tasks,
+                filteredTasks: tasks,
+                activeFilter: tasksState.activeFilter,
+                isLoading: false,
+                error: null,
+              });
+            } catch (error) {
+              setTasksState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: (error as Error).message || 'Failed to fetch tasks',
+              }));
+            }
+          };
+
+          fetchTasks();
+        }}
+      />
     </div>
   </div>
   );

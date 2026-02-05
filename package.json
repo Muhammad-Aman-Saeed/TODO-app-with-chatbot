@@ -4,11 +4,10 @@
   "private": true,
   "scripts": {
     "build": "cd frontend && npm run build",
-    "vercel-build": "cd frontend && npm install --legacy-peer-deps && npm run build"
+    "vercel-build": "cd frontend && npm install --legacy-peer-deps && npm run build",
+    "dev-frontend": "cd frontend && npx next dev",
+    "dev-backend": "cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload"
   },
-  "workspaces": [
-    "frontend"
-  ],
   "devDependencies": {
     "eslint": "^9.0.0"
   },

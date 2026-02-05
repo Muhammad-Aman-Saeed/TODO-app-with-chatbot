@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { User, CurrentUserState } from '@/types';
-import { apiClient } from '@/lib/api';
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<CurrentUserState>({
@@ -82,24 +81,38 @@ export const useAuth = () => {
     };
 
     checkAuthStatus();
-  }, []);
+  }, []); // Empty dependency array ensures this effect only runs once on mount
 
   const login = async (email: string, password: string) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const response = await apiClient.login({ email, password });
-      
+
+      // Use direct fetch instead of apiClient to avoid circular dependency
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Login failed');
+      }
+
+      const data = await response.json();
+
       // Store token in localStorage
-      localStorage.setItem('jwt_token', response.token);
-      
+      localStorage.setItem('jwt_token', data.token);
+
       setAuthState({
-        user: response.user,
+        user: data.user,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       });
-      
+
       return { success: true };
     } catch (error) {
       const errorMessage = (error as Error).message || 'Login failed';
@@ -115,19 +128,33 @@ export const useAuth = () => {
   const register = async (email: string, password: string, name?: string) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const response = await apiClient.register({ email, password, name });
-      
+
+      // Use direct fetch instead of apiClient to avoid circular dependency
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Registration failed');
+      }
+
+      const data = await response.json();
+
       // Store token in localStorage
-      localStorage.setItem('jwt_token', response.token);
-      
+      localStorage.setItem('jwt_token', data.token);
+
       setAuthState({
-        user: response.user,
+        user: data.user,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       });
-      
+
       return { success: true };
     } catch (error) {
       const errorMessage = (error as Error).message || 'Registration failed';

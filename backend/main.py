@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from backend.routes.tasks import router as tasks
-from backend.routes.auth import router as auth
-from backend.db import engine
-from backend.models import Task
+from .routes.tasks import router as tasks
+from .routes.auth import router as auth
+from .routes.chat import router as chat
+from .db import engine
 from sqlmodel import SQLModel
 import os
 from dotenv import load_dotenv
@@ -14,6 +14,8 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Import models here to ensure they're registered with SQLModel metadata before creating tables
+    from .models import Task, Conversation, Message  # noqa: F401
     # Startup logic - create database tables
     SQLModel.metadata.create_all(bind=engine)
     yield
@@ -57,6 +59,9 @@ app.include_router(tasks, prefix="/api", tags=["tasks"])
 
 # Include auth router with prefix
 app.include_router(auth, prefix="/api", tags=["auth"])
+
+# Include chat router with prefix
+app.include_router(chat, prefix="/api", tags=["chat"])
 
 @app.get("/")
 def read_root():
