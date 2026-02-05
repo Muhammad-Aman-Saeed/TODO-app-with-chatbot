@@ -20,7 +20,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, conversationId: 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<number | null>(initialConversationId);
+  const [conversationId, setConversationId] = useState<number | null>(initialConversationId ?? null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize conversation when modal opens with an existing conversation
