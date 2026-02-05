@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
-import { chatAPI } from '../lib/api';
+import { chatAPI, apiClient } from '../lib/api';
 
 interface Message {
   id: string;

@@ -8,17 +8,9 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api',
   },
-  // Add empty turbopack config to satisfy Next.js 16+ requirements
-  turbopack: {},
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Don't resolve 'fs' module on the client-side
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
-    return config;
+  // Enable turbopack explicitly to resolve the conflict
+  experimental: {
+    turbo: {}
   }
 };
 
