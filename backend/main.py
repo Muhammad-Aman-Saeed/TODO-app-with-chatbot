@@ -44,6 +44,20 @@ prod_origin = os.getenv("PRODUCTION_ORIGIN")
 if prod_origin:
     allowed_origins.append(prod_origin)
 
+# Add Vercel domain for frontend deployment
+vercel_domain = os.getenv("VERCEL_URL")
+if vercel_domain:
+    # Add both https and http versions
+    allowed_origins.append(f"https://{vercel_domain}")
+    allowed_origins.append(f"http://{vercel_domain}")
+
+# Add common Vercel deployment patterns for testing
+allowed_origins.extend([
+    "*.vercel.app",
+    "https://*.vercel.app",
+    "http://*.vercel.app"
+])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -69,7 +83,7 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

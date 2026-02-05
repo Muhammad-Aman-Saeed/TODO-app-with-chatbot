@@ -33,6 +33,9 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // Add /api prefix to all endpoints to match backend router configuration
+    // Backend: include_router(auth, prefix="/api") means /api/auth/register
+    const apiEndpoint = `/api${endpoint}`;
     const token = this.getJwtToken();
 
     const headers = {
@@ -42,7 +45,7 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.baseUrl}${apiEndpoint}`, {
         ...options,
         headers,
       });
