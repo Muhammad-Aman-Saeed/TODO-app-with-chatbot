@@ -68,11 +68,11 @@ app.add_middleware(
     expose_headers=["Authorization"]
 )
 
+# Include auth router WITHOUT prefix (so endpoints are at /auth/*)
+app.include_router(auth, tags=["auth"])
+
 # Include task router with prefix
 app.include_router(tasks, prefix="/api", tags=["tasks"])
-
-# Include auth router with prefix
-app.include_router(auth, prefix="/api", tags=["auth"])
 
 # Include chat router with prefix
 app.include_router(chat, prefix="/api", tags=["chat"])
